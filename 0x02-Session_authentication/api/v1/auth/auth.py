@@ -1,54 +1,62 @@
 #!/usr/bin/env python3
-"""AUTHORIZATION Class"""
-
+"""
+Module for handling the user authentication
+"""
 from flask import request
-from typing import TypeVar, List
+from typing import List, TypeVar
+import os
 
 
-def require_auth_for_dynamic_path(path: str,
-                                  excluded_paths: List[str]) -> bool:
-    """returns true if partial path requires authentication"""
-    if len(excluded_paths) == 0:
-        return True
-    for item in excluded_paths:
-        if path[:-1].startswith(item[:-1]):
-            return False
-    return True
+_my_session_id = os.getenv('SESSION_NAME')
 
 
-class Auth():
-    """AUTHORIZATION Class"""
+class Auth:
+    """
+    class for handling authentication
+    """
 
     def require_auth(self, path: str, excluded_paths: List[str]) -> bool:
-        """returns true if path requires authentication"""
-        verify_dynamic_path = False
-        verify_fixed_path = False
-
-        if path is None or excluded_paths is None or len(excluded_paths) == 0:
+        """
+        checks if the path requuires a user authentication or not
+        """
+        if path is None:
             return True
 
-        if path[-1] != '/':
-            path += '/'
+        if excluded_paths is None or len(excluded_paths) == 0:
+            return True
 
-        fixed_path = [
-            path1 for path1 in excluded_paths if not path1.endswith('*')]
-        # path like : ["/api/v1/stat*"]
-        dynamic_path = [
-            path1 for path1 in excluded_paths if path1.endswith('*')]
-
-        if path not in fixed_path:
-            verify_fixed_path = True
-        if require_auth_for_dynamic_path(path, dynamic_path):
-            verify_dynamic_path = True
-
-        return verify_fixed_path and verify_dynamic_path
+        if path.endswith('/'):
+            if path in excluded_paths:
+                return False
+            else:
+                return True
+        else:
+            path = path + ('/')
+            if path in excluded_paths:
+                return False
+            else:
+                return True
 
     def authorization_header(self, request=None) -> str:
-        """get auth info from the authorization header"""
-        if request is None or request.headers.get('Authorization') is None:
+        """
+        returns None
+        """
+        if request is None:
+            return None
+        if request.headers.get('Authorization') is None:
             return None
         return request.headers.get('Authorization')
 
     def current_user(self, request=None) -> TypeVar('User'):
-        """get and return the current user"""
+        """
+        returns None
+        """
         return None
+
+    def session_cookie(self, request=None):
+        """
+        returns a cookie value from a request
+        """
+        if request is None:
+            return None
+        return request.cookies.get(_my_session_id)

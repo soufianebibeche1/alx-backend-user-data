@@ -12,6 +12,7 @@ def view_all_users() -> str:
     Return:
       - list of all User objects JSON represented
     """
+
     all_users = [user.to_json() for user in User.all()]
     return jsonify(all_users)
 
@@ -25,17 +26,18 @@ def view_one_user(user_id: str = None) -> str:
       - User object JSON represented
       - 404 if the User ID doesn't exist
     """
-    if user_id == "me":
-        if not request.current_user:
-            abort(404)
-        else:
-            return jsonify(request.current_user.to_json())
     if user_id is None:
         abort(404)
-    user = User.get(user_id)
-    if user is None:
+    if user_id == 'me' and request.current_user is None:
         abort(404)
-    return jsonify(user.to_json())
+    if user_id == 'me' and request.current_user is not None:
+        user = request.current_user
+        return jsonify(user.to_json())
+    else:
+        user = User.get(user_id)
+        if user is None:
+            abort(404)
+        return jsonify(user.to_json())
 
 
 @app_views.route('/users/<user_id>', methods=['DELETE'], strict_slashes=False)
